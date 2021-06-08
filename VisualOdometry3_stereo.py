@@ -16,7 +16,7 @@ position_axes = position_figure.add_subplot(1, 1, 1)
 position_axes.set_aspect('equal', adjustable='box')
 ####################################################
 ###############ground truth###################################
-gt_file = glob.glob('./poses/01.txt')
+gt_file = glob.glob('./poses/07.txt')
 ground_truth_exist = True
 ground_truth = []
 with open(*gt_file) as f:
@@ -83,6 +83,7 @@ def feature_matching(des1, des2, detector='ORB', k=2):
         bf = cv.BFMatcher_create(cv.NORM_HAMMING2, crossCheck=False)
     elif detector == "SIFT":
         bf = cv.BFMatcher_create(cv.NORM_L2, crossCheck=False)
+
     matches = bf.knnMatch(des1, des2, k)
 
     matches = sorted(matches, key=lambda x: x[0].distance)
@@ -174,17 +175,17 @@ prev_kp_L = None
 
 current_pos = np.zeros((3, 1))
 current_rot = np.eye(3)
-T_tot = np.eye(4) # homogeneous transformation matrix
 
-output = len(glob.glob('./image_0/*.png'))  # 사진 개수
+
+output = len(glob.glob('./07/image_0/*.png'))  # 사진 개수
 
 for index in range(output):
-    img_file_L = os.path.join('./image_0/', '{:06d}.png').format(index)
-    name_L = './image_0/' + img_file_L
+    img_file_L = os.path.join('./07/image_0/', '{:06d}.png').format(index)
+    name_L = './07/image_0/' + img_file_L
     img_L = cv.imread(name_L, 0)
 
-    img_file_R = os.path.join('./image_1/', '{:06d}.png').format(index)
-    name_R = './image_1/'+img_file_R
+    img_file_R = os.path.join('./07/image_1/', '{:06d}.png').format(index)
+    name_R = './07/image_1/'+img_file_R
     img_R = cv.imread(name_R, 0)
     # print("check: {} , img : {} ".format(index, img))
     # cvtColor는 안함  이미 변환되어 있으니까
@@ -208,33 +209,9 @@ for index in range(output):
 
     # 3. Pose 추정
     R, t, prev_img_L_point, img_L_point = PNP_estimate_motion(prev_kp_L, kp_L, matches, depth_map, depth_limit=1000, intrinsic_matrix=camera_matrix)
-    # H = np.eye(4) # H = [R|T]
-    # H[:3,:3], H[:3, 3] = R, t.T
-    # T_tot = T_tot.dot(np.linalg.inv(H))
-    # R, t = T_tot[:3,:3], T_tot[:3, 3]
-    # t = t.reshape(3,1)
 
-
-    #trajectory = np.zeros((index, 3, 4))
-    #trajectory[i + 1, :, :] = T_tot[:3, :]
-    ####################
-    #     # 2.feature tracking (KLT : Kanade-Lucas-Tomasi)
-    #     pt1, st, err = cv2.calcOpticalFlowPyrLK(prev_img_L,img_L, points,None, **lk_params)
-
-    #     # Essenstial Matrix
-    #     E, mask = cv.findEssentialMat(pt1, points, camera_matrix, cv.RANSAC, 0.999, 1.0, None)
-
-    #     points, R, t, mask = cv.recoverPose(E, pt1, points, camera_matrix)
-    #####################
     scale = 1.0
 
-    # ground truth를 기반으로 scale 계산
-    if ground_truth_exist:
-        gt_pose = [ground_truth[index][0, 3], ground_truth[index][2, 3]]
-        pre_gt_pose = [ground_truth[index - 1][0, 3], ground_truth[index - 1][2, 3]]
-        scale = math.sqrt(math.pow((gt_pose[0] - pre_gt_pose[0]), 2.0) + math.pow((gt_pose[1] - pre_gt_pose[1]), 2.0))
-
-    # 우선 ground truth가 없다면 scale 계산은 하지 않고
     current_pos += current_rot.dot(t) * scale
     current_rot = R.dot(current_rot)
 
@@ -254,4 +231,4 @@ for index in range(output):
     prev_kp_L = kp_L
     prev_des_L = des_L
 
-position_figure.savefig("position_plot_stereo.png")
+position_figure.savefig("position_plot_stereo2_sift_other_env_07.png")

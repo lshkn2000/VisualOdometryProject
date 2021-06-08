@@ -27,6 +27,23 @@ with open(*gt_file) as f:
         ground_truth.append(pose)
 
 #######################################################################
+#######################################################################
+# parameters for lucas kanade optical flow
+lk_params = dict(winSize=(21, 21),criteria=(cv.TERM_CRITERIA_EPS |cv.TERM_CRITERIA_COUNT, 30, 0.03))
+#######################################################################
+#####################camera setting information ###############################
+camera_matrix = np.array([[718.8560, 0.0, 607.1928],
+                          [0.0, 718.8560, 185.2157],
+                          [0.0, 0.0, 1.0]])
+f_l = camera_matrix[0][0]
+f_r = camera_matrix[0][0]
+c_x_l = camera_matrix[0][2]
+c_y_l = camera_matrix[1][2]
+c_x_r = camera_matrix[0][2]
+c_y_r = camera_matrix[1][2]
+baseline = -3.861448000000e+02
+##################################################################################
+
 prev_img = None
 
 current_pos_akaze = np.zeros((3, 1))
@@ -98,60 +115,60 @@ for index in range(output):
     points_sift = np.array(list(map(lambda x: [x.pt], prev_keypoint_sift)), dtype=np.float32).squeeze()
 
     #############################points matching ##################################
-    #     # BFMatcher with default params
-    #     # brute-force matcher
-    #     # 사이즈가 커지면 속도 저하
-    #     bf = cv.BFMatcher()
-    #     matches_akaze = bf.knnMatch(prev_des_akaze, des_akaze, k=2)
-    #     matches_orb = bf.knnMatch(prev_des_orb, des_orb, k=2)
-    #     matches_kaze = bf.knnMatch(prev_des_kaze, des_kaze, k=2)
-    #     matches_sift = bf.knnMatch(prev_des_sift, des_sift, k=2)
-
-    #     # Apply ratio test
-    #     good_matches_akaze = []
-    #     good_matches_orb = []
-    #     good_matches_kaze = []
-    #     good_matches_sift = []
-
-    #     pt1_akaze, pt2_akaze = [], []
-    #     pt1_orb, pt2_orb = [],[]
-    #     pt1_kaze, pt2_kaze = [],[]
-    #     pt1_sift, pt2_sift = [],[]
-
-    #     for m, n in matches_akaze:
-    #         if m.distance < 0.75 * n.distance:
-    #             good_matches_akaze.append([m])
-    #             pt1_akaze.append(prev_keypoint_akaze[m.queryIdx].pt)
-    #             pt2_akaze.append(kp_akaze[m.trainIdx].pt)
-    #     for m,n in matches_orb:
-    #         if m.distance < 0.75*n.distance:
-    #             good_matches_orb.append([m])
-    #             pt1_orb.append(prev_keypoint_orb[m.queryIdx].pt)
-    #             pt2_orb.append(kp_orb[m.trainIdx].pt)
-    #     for m,n in matches_kaze:
-    #         if m.distance < 0.75*n.distance:
-    #             good_matches_kaze.append([m])
-    #             pt1_kaze.append(prev_keypoint_kaze[m.queryIdx].pt)
-    #             pt2_kaze.append(kp_kaze[m.trainIdx].pt)
-    #     for m,n in matches_sift:
-    #         if m.distance < 0.75*n.distance:
-    #             good_matches_sift.append([m])
-    #             pt1_sift.append(prev_keypoint_sift[m.queryIdx].pt)
-    #             pt2_sift.append(kp_sift[m.trainIdx].pt)
-
-    #     pt1_akaze, pt2_akaze = np.float32(pt1_akaze), np.float32(pt2_akaze)
-    #     pt1_orb, pt2_orb = np.float32(pt1_orb), np.float32(pt2_orb)
-    #     pt1_kaze, pt2_kaze = np.float32(pt1_kaze), np.float32(pt2_kaze)
-    #     pt1_sift, pt2_sift = np.float32(pt1_sift), np.float32(pt2_sift)
+    # # BFMatcher with default params
+    # # brute-force matcher
+    # # 사이즈가 커지면 속도 저하
+    # bf = cv.BFMatcher()
+    # matches_akaze = bf.knnMatch(prev_des_akaze, des_akaze, k=2)
+    # matches_orb = bf.knnMatch(prev_des_orb, des_orb, k=2)
+    # matches_kaze = bf.knnMatch(prev_des_kaze, des_kaze, k=2)
+    # matches_sift = bf.knnMatch(prev_des_sift, des_sift, k=2)
+    #
+    # # Apply ratio test
+    # good_matches_akaze = []
+    # good_matches_orb = []
+    # good_matches_kaze = []
+    # good_matches_sift = []
+    #
+    # pt1_akaze, pt2_akaze = [], []
+    # pt1_orb, pt2_orb = [],[]
+    # pt1_kaze, pt2_kaze = [],[]
+    # pt1_sift, pt2_sift = [],[]
+    #
+    # for m, n in matches_akaze:
+    #     if m.distance < 0.75 * n.distance:
+    #         good_matches_akaze.append([m])
+    #         pt1_akaze.append(prev_keypoint_akaze[m.queryIdx].pt)
+    #         pt2_akaze.append(kp_akaze[m.trainIdx].pt)
+    # for m,n in matches_orb:
+    #     if m.distance < 0.75*n.distance:
+    #         good_matches_orb.append([m])
+    #         pt1_orb.append(prev_keypoint_orb[m.queryIdx].pt)
+    #         pt2_orb.append(kp_orb[m.trainIdx].pt)
+    # for m,n in matches_kaze:
+    #     if m.distance < 0.75*n.distance:
+    #         good_matches_kaze.append([m])
+    #         pt1_kaze.append(prev_keypoint_kaze[m.queryIdx].pt)
+    #         pt2_kaze.append(kp_kaze[m.trainIdx].pt)
+    # for m,n in matches_sift:
+    #     if m.distance < 0.75*n.distance:
+    #         good_matches_sift.append([m])
+    #         pt1_sift.append(prev_keypoint_sift[m.queryIdx].pt)
+    #         pt2_sift.append(kp_sift[m.trainIdx].pt)
+    #
+    # pt1_akaze, pt2_akaze = np.float32(pt1_akaze), np.float32(pt2_akaze)
+    # pt1_orb, pt2_orb = np.float32(pt1_orb), np.float32(pt2_orb)
+    # pt1_kaze, pt2_kaze = np.float32(pt1_kaze), np.float32(pt2_kaze)
+    # pt1_sift, pt2_sift = np.float32(pt1_sift), np.float32(pt2_sift)
     #################################################################################
 
-    pt1_akaze, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_akaze, None)
+    pt1_akaze, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_akaze, None, **lk_params)
     pt2_akaze = points_akaze
-    pt1_orb, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_orb, None)
+    pt1_orb, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_orb, None, **lk_params)
     pt2_orb = points_orb
-    pt1_kaze, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_kaze, None)
+    pt1_kaze, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_kaze, None, **lk_params)
     pt2_kaze = points_kaze
-    pt1_sift, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_sift, None)
+    pt1_sift, st, err = cv.calcOpticalFlowPyrLK(prev_img, img, points_sift, None, **lk_params)
     pt2_sift = points_sift
 
     # Essenstial Matrix
@@ -187,11 +204,11 @@ for index in range(output):
     current_rot_sift = R_sift.dot(current_rot_sift)
 
     # ground truth plot
-    position_axes.scatter(ground_truth[index][0, 3], ground_truth[index][2, 3], s=0.5, c='red')
+    position_axes.scatter(ground_truth[index][0, 3], ground_truth[index][2, 3],s=2 , c='red')
 
     # odometry plot
     position_axes.scatter(-current_pos_akaze[0][0], -current_pos_akaze[2][0], s=2, c='gray')
-    position_axes.scatter(-current_pos_orb[0][0], -current_pos_orb[2][0], s=2, c='red')
+    position_axes.scatter(-current_pos_orb[0][0], -current_pos_orb[2][0], s=2, c='purple')
     position_axes.scatter(-current_pos_kaze[0][0], -current_pos_kaze[2][0], s=2, c='blue')
     position_axes.scatter(-current_pos_sift[0][0], -current_pos_sift[2][0], s=2, c='black')
     plt.pause(.01)
@@ -212,4 +229,4 @@ for index in range(output):
     prev_des_kaze = des_kaze
     prev_des_sift = des_sift
 
-position_figure.savefig("position_plot.png")
+position_figure.savefig("mono_descriptor_test.png")
